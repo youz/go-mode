@@ -60,7 +60,7 @@
     st)
   "Syntax table for Go mode.")
 
-(defvar *go-mode-keyword-file* "~/etc/go")
+(defvar *go-mode-keyword-file* "~/etc/Go")
 (defvar *go-mode-keyword-hash-table* nil)
 
 (defvar *go-mode-keywords*
