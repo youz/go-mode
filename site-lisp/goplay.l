@@ -31,16 +31,25 @@
       (define-key km #\q #'closebuf))
     (use-keymap km)))
 
+(defun utf8encode (str)
+  (let* ((ch (si:make-string-chunk
+	      (convert-encoding-from-internal *encoding-utf8n* str)))
+	 (size (si:chunk-size ch))
+	 (buf (make-vector (1- size) :element-type 'character)))
+    (dotimes (i (1- size))
+      (setf (svref buf i) (code-char (si:unpack-uint8 ch i))))
+    buf))
+
 (defun run-region (from to)
   (interactive "r")
   (let ((src (buffer-substring from to)))
     (message "goplay: requesting...")
-    (http-client:http-post *goplay-url*
-			   (convert-encoding-from-internal ed:*encoding-utf8n* src)
-			   :oncomplete
-			   (lambda (res status headers requrl)
-			     (message "goplay: done.")
-			     (popup-result (= status 200) res)))))
+    (http-client:http-post
+     *goplay-url* (utf8encode src)
+     :oncomplete
+     (lambda (res status headers requrl)
+       (message "goplay: done.")
+       (popup-result (= status 200) res)))))
 
 (defun run-buffer ()
   (interactive)
