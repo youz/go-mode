@@ -28,8 +28,6 @@
     ;; Add _ to :word: character class
     (set-syntax-symbol st #\_)
     (set-syntax-escape st #\\)
-    (set-syntax-symbol st #\_)
-    (set-syntax-symbol st #\#)
     (set-syntax-match st #\( #\))
     (set-syntax-match st #\{ #\})
     (set-syntax-match st #\[ #\])
