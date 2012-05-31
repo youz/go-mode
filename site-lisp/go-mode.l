@@ -361,9 +361,19 @@ indented one level."
 
 (defun go-mode-newline-and-indent (&optional (arg 1))
   (interactive "*p")
-  (delete-trailing-spaces)
-  (insert #\LFD arg)
-  (go-mode-indent-line))
+  (case #0=(parse-point-syntax)
+    (:string
+     ;; Go doesn't support multi-line string
+     (while (and (not (eolp)) (eq #0# :string))
+       (forward-char))
+     (if (and (eolp) (eq #0# :string))
+	 (insert #\" #\,)
+       (skip-syntax-spec-forward "."))
+     (go-mode-newline-and-indent arg))
+    (t
+     (delete-trailing-spaces)
+     (insert #\LFD arg)
+     (go-mode-indent-line))))
 
 
 (defun go-mode-list-functions ()
