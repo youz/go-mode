@@ -129,6 +129,7 @@ built-ins, functions, and some types."
     (define-key m #\= 'go-mode-electric-insert)
     (define-key m #\TAB 'go-mode-indent-line)
     (define-key m #\RET 'go-mode-newline-and-indent)
+    (define-key m '(#\C-c #\l) 'list-function)
     (define-key m '(#\C-c #\C-h) 'godoc)
     m)
   "Keymap used by Go mode to implement electric keys.")
@@ -363,6 +364,15 @@ indented one level."
   (insert #\LFD arg)
   (go-mode-indent-line))
 
+
+(defun go-mode-list-functions ()
+  (let ((fns nil))
+    (save-excursion
+      (while (scan-buffer "^func *\\(\\((.*)\\)? *\\_s+ *(.*)\\).*{" :regexp t :no-dup t)
+	(push (list (current-line-number) (match-string 1)) fns)))
+    (nreverse fns)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Go mode
 ;;
@@ -397,6 +407,10 @@ functions, and some types.  It also provides indentation that is
   (setq mode-specific-indent-command #'go-mode-indent-line)
 ;  (make-local-variable 'post-buffer-modified-hook)
 ;  (add-hook 'post-buffer-modified-hook #'go-mode-delayed-electric-hook)
+
+  ;; list-function
+  (make-local-variable 'ed::build-summary-function)
+  (setq ed::build-summary-function 'go-mode-list-functions)
 
   ;; Go style
   (setq indent-tabs-mode t)
