@@ -468,79 +468,60 @@ Replace the current buffer on success; display errors on failure."
   (when (eq major-mode 'go-mode) (gofmt)))
 |#
 
-#|
-(defun godoc-read-query ()
-  "Read a godoc query from the minibuffer."
-  ;; Compute the default query as the symbol under the cursor.
-  ;; TODO: This does the wrong thing for e.g. multipart.NewReader (it only grabs
-  ;; half) but I see no way to disambiguate that from e.g. foobar.SomeMethod.
-  (let* ((bounds (bounds-of-thing-at-point 'symbol))
-         (symbol (if bounds
-                     (buffer-substring-no-properties (car bounds)
-                                                     (cdr bounds)))))
-    (read-string (if symbol
-                     (format "godoc (default %s): " symbol)
-                   "godoc: ")
-                 nil nil symbol)))
+(defun go-mode-find-imports ()
+  (save-excursion
+    (beginning-of-buffer)
+    (when (scan-buffer "^import" :regexp t :tail t)
+      (skip-chars-forward " \t")
+      (let ((p (point)))
+	(if (looking-for "(")
+	    (when (ignore-errors (goto-matched-parenthesis))
+	      #0=(read-from-string (buffer-substring p (1+ (point)))))
+	  (progn
+	    (goto-eol)
+	    (ignore-errors #0#)))))))
 
-(defun godoc-get-buffer (query)
-  "Get an empty buffer for a godoc query."
-  (let* ((buffer-name (concat "*godoc " query "*"))
-         (buffer (get-buffer buffer-name)))
-    ;; Kill the existing buffer if it already exists.
-    (when buffer (kill-buffer buffer))
-    (get-buffer-create buffer-name)))
+(defun godoc-getsymbol ()
+  (save-excursion
+    (skip-chars-backward #0="0-9A-Za-z_.")
+    (let ((p (point)))
+      (skip-chars-forward #0#)
+      (when (> (point) p)
+	(let* ((sym (buffer-substring p (point)))
+	       (pkg (if (string-match "^\\([^.]+\\)\\." sym)
+			(match-string 1)
+		      sym))
+	       (imp (find-if #'(lambda (im)
+				 (string-match (concat "/" pkg "$") im))
+			     (go-mode-find-imports))))
+	  (if imp
+	      (substitute-string sym pkg imp)
+	    sym))))))
 
-(defun godoc-buffer-sentinel (proc event)
-  "Sentinel function run when godoc command completes."
-  (with-current-buffer (process-buffer proc)
-    (cond ((string= event "finished\n")  ;; Successful exit.
-           (goto-char (point-min))
-           (display-buffer (current-buffer) 'not-this-window))
-          ((not (= (process-exit-status proc) 0))  ;; Error exit.
-           (let ((output (buffer-string)))
-             (kill-buffer (current-buffer))
-             (message (concat "godoc: " output)))))))
-
-;;;###autoload
 (defun godoc (query)
-  "Show go documentation for a query, much like M-x man."
-  (interactive (list (godoc-read-query)))
-  (unless (string= query "")
-    (set-process-sentinel
-     (start-process-shell-command "godoc" (godoc-get-buffer query)
-                                  (concat "godoc " query))
-     'godoc-buffer-sentinel)
-    nil))
-|#
-
-(defun godoc-mode (buf)
-  (let ((km (make-sparse-keymap))
-	(wc (current-window-configuration)))
-    (pop-to-buffer buf t t)
-    (make-local-variable 'keyword-hash-table)
-    (setq keyword-hash-table (load-keyword-file "go"))
-    (make-local-variable 'highlight-keyword)
-    (setq highlight-keyword t)
-    (make-local-variable 'regexp-keyword-list)
-    (setq regexp-keyword-list (ed::go-mode-regexp-keyword-list))
+  (interactive "sgodoc: " :default0 (godoc-getsymbol))
+  (let* ((bufname (format nil "*godoc - ~A*" query))
+	 (buf (get-buffer-create bufname))
+	 (km (make-sparse-keymap))
+	 (wc (current-window-configuration))
+	 (param (substitute-string query "\\." " ")))
+    (erase-buffer buf)
     (define-key km #\q (lambda ()
 			 (interactive)
 			 (delete-buffer buf)
 			 (set-window-configuration wc)))
-    (use-keymap km)))
-
-(defun godoc (query)
-  (interactive "sgodoc: " :default0 (ed::get-winhelp-topic))
-  (let* ((bufname (format nil "*godoc - ~A*" query))
-	 (buf (get-buffer-create bufname))
-	 (param (substitute-string query "\\." " ")))
-    (erase-buffer buf)
     (make-process (format nil "~A ~A" *godoc-command* param) :output buf)
     (labels ((wait ()
 	       (when (eq (process-status (buffer-process buf)) :exit)
 		 (stop-timer #'wait)
-		 (godoc-mode buf)
+		 (pop-to-buffer buf t t)
+		 (make-local-variable 'keyword-hash-table)
+		 (setq keyword-hash-table (load-keyword-file "go"))
+		 (make-local-variable 'highlight-keyword)
+		 (setq highlight-keyword t)
+		 (make-local-variable 'regexp-keyword-list)
+		 (setq regexp-keyword-list (ed::go-mode-regexp-keyword-list))
+		 (use-keymap km)
 		 (refresh-screen))))
       (start-timer 0.1 #'wait))))
 
