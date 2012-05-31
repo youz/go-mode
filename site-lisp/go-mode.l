@@ -130,7 +130,8 @@ built-ins, functions, and some types."
     (define-key m #\TAB 'go-mode-indent-line)
     (define-key m #\RET 'go-mode-newline-and-indent)
     (define-key m '(#\C-c #\l) 'list-function)
-    (define-key m '(#\C-c #\C-h) 'godoc)
+    (define-key m #\F1 'godoc)
+    (define-key m '(#\C-c #\h) 'godoc)
     m)
   "Keymap used by Go mode to implement electric keys.")
 
