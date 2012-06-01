@@ -241,9 +241,17 @@ token on the line."
 (defun go-mode-backward-skip-comments ()
   "Skip backward over comments and whitespace."
   ;; only proceed if point is in a comment or white space
-  (while (or (let ((start (go-mode-in-comment (point))))
-	       (when start (goto-char (1- start))))
-	     (skip-syntax-spec-backward " /"))))
+  (when (eobp) (backward-char))
+  (loop
+    (let ((start (go-mode-in-comment (point))))
+      (if start
+	  (goto-char (1- start))
+	(let ((c (char-after (point))))
+	  (if (or (char= c #\LFD)
+		  (syntax-whitespace-p c))
+	      (backward-char)
+	    (return))))))
+  (forward-char))
 
 (defun go-mode-indentation ()
   "Compute the ideal indentation level of the current line.
