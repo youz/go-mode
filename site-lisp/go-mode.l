@@ -243,6 +243,8 @@ token on the line."
   ;; only proceed if point is in a comment or white space
   (when (eobp) (backward-char))
   (loop
+    (when (bobp)
+      (return-from go-mode-backward-skip-comments))
     (let ((start (go-mode-in-comment (point))))
       (if start
 	  (goto-char (1- start))
