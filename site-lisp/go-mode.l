@@ -384,7 +384,7 @@ indented one level."
 (defun go-mode-list-functions ()
   (let ((fns nil))
     (save-excursion
-      (while (scan-buffer "^func *\\(\\((.*)\\)? *\\_s+ *(.*)\\).*{" :regexp t :no-dup t)
+      (while (scan-buffer "^func *\\(\\((.*)\\)? *\\_s+ *(.*).*\\){" :regexp t :no-dup t)
 	(push (list (current-line-number) (match-string 1)) fns)))
     (nreverse fns)))
 
