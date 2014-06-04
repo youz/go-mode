@@ -514,7 +514,7 @@ Replace the current buffer on success; display errors on failure."
       (let ((p (point)))
 	(if (looking-for "(")
 	    (when (ignore-errors (goto-matched-parenthesis))
-	      #0=(read-from-string (buffer-substring p (1+ (point)))))
+	      (remove-if #'symbolp #0=(read-from-string (buffer-substring p (1+ (point))))))
 	  (progn
 	    (goto-eol)
 	    (ignore-errors #0#)))))))
@@ -530,7 +530,7 @@ Replace the current buffer on success; display errors on failure."
 			(match-string 1)
 		      sym))
 	       (imp (find-if #'(lambda (im)
-				 (string-match (concat "/" pkg "$") im))
+				 (string-match (concat "/?" pkg "$") im))
 			     (go-mode-find-imports))))
 	  (if imp
 	      (substitute-string sym pkg imp)
