@@ -34,7 +34,9 @@
     (set-syntax-match st #\( #\))
     (set-syntax-match st #\{ #\})
     (set-syntax-match st #\[ #\])
+    (set-syntax-string st #\')
     (set-syntax-string st #\")
+    (set-syntax-string st #\`)
 
     ;; Operators (punctuation)
     (set-syntax-punctuation st #\+)
@@ -50,8 +52,6 @@
     (set-syntax-punctuation st #\=)
     (set-syntax-punctuation st #\<)
     (set-syntax-punctuation st #\>)
-    (set-syntax-punctuation st #\')
-    (set-syntax-punctuation st #\`)
 
     (set-syntax-start-c++-comment st #\/)
     (set-syntax-end-c++-comment st #\LFD)
@@ -174,10 +174,10 @@ built-ins, functions, and some types."
     (t nil)))
 
 (defun go-mode-in-string (pos)
-  (when #0=(eq (parse-point-syntax pos) :string)
+  (when (eq (parse-point-syntax pos) :string)
     (save-excursion
       (goto-char pos)
-      (while #0#
+      (while (eq (parse-point-syntax) :string)
 	(skip-syntax-spec-backward "^\"")
 	(backward-char))
       (point))))
@@ -376,19 +376,9 @@ indented one level."
 
 (defun go-mode-newline-and-indent (&optional (arg 1))
   (interactive "*p")
-  (case #0=(parse-point-syntax)
-    (:string
-     ;; Go doesn't support multi-line string
-     (while (and (not (eolp)) (eq #0# :string))
-       (forward-char))
-     (if (and (eolp) (eq #0# :string))
-	 (insert #\" #\,)
-       (skip-syntax-spec-forward "."))
-     (go-mode-newline-and-indent arg))
-    (t
-     (delete-trailing-spaces)
-     (insert #\LFD arg)
-     (go-mode-indent-line))))
+  (delete-trailing-spaces)
+  (insert #\LFD arg)
+  (go-mode-indent-line))
 
 
 (defun go-mode-list-functions ()
