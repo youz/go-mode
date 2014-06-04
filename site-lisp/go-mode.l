@@ -10,7 +10,9 @@
 
 (in-package :editor)
 (export '(go-mode
-	  gofmt
+	  go-format-region
+	  go-format-buffer
+	  godoc
 	  *go-mode-map*
 	  *go-mode-hook*
 	  *go-mode-tab-width*
@@ -22,6 +24,7 @@
 	  ))
 
 (defvar *godoc-command* "godoc.exe")
+(defvar *gofmt-command* "gofmt.exe")
 
 (defvar *go-mode-syntax-table*
   (let ((st (make-syntax-table)))
@@ -132,6 +135,8 @@ built-ins, functions, and some types."
     (define-key m '(#\C-c #\l) 'list-function)
     (define-key m #\F1 'godoc)
     (define-key m '(#\C-c #\h) 'godoc)
+    (define-key m '(#\C-c #\f #\r) 'go-format-region)
+    (define-key m '(#\C-c #\f #\b) 'go-format-buffer)
     m)
   "Keymap used by Go mode to implement electric keys.")
 
@@ -393,6 +398,14 @@ indented one level."
 	(push (list (current-line-number) (match-string 1)) fns)))
     (nreverse fns)))
 
+
+(defun go-format-region (from to)
+  (interactive "r")
+  (filter-region *gofmt-command* from to))
+
+(defun go-format-buffer ()
+  (interactive)
+  (filter-region *gofmt-command* (point-min) (point-max)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Go mode
