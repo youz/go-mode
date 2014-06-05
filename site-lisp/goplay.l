@@ -14,6 +14,8 @@
   (let ((buf (get-buffer-create "*goplay*"))
 	(km (make-sparse-keymap))
 	(wc (current-window-configuration)))
+    (setq res (substitute-string res "^<pre>" "")
+	  res (substitute-string res "</pre>$" ""))
     (erase-buffer buf)
     (with-output-to-buffer (buf)
       (format t "[~:[error!~;ok~]]~%" ok)
